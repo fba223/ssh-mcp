@@ -27,7 +27,8 @@
 
 - [Install](#installation) SSH MCP Server
 - [Configure](#configuration) SSH MCP Server
-- [Set up](#client-setup) your MCP Client (e.g. Claude Desktop, Cursor, etc)
+- [Expose the HTTP endpoint](#streamable-http-server) if you want to connect over the network
+- [Set up](#client-setup) your MCP Client (e.g. Claude Desktop, Cursor, GitHub Copilot Studio, etc)
 - Execute remote shell commands on your Linux or Windows server via natural language
 
 ## Features
@@ -61,9 +62,39 @@
    npm install
    ```
 
+## Streamable HTTP Server
+
+Starting with v1.1.0 the server ships with a [Streamable HTTP transport](https://modelcontextprotocol.io/specs/streaming-http) so
+that you can host it behind a public endpoint or reverse proxy and connect from remote MCP clients such as GitHub Copilot Studio
+agents.
+
+```bash
+npx ssh-mcp -- \
+  --host=1.2.3.4 \
+  --user=root \
+  --password=pass \
+  --listen-port=8080 \
+  --listen-host=0.0.0.0 \
+  --base-path=/mcp \
+  --allow-origin="https://your-domain.example" \
+  --enable-json-response
+```
+
+**HTTP Options:**
+
+- `listen-host` *(default: `0.0.0.0`)* — network interface the HTTP server binds to
+- `listen-port` *(default: `3000`)* — TCP port exposed by the server
+- `base-path` *(default: `/mcp`)* — URL path where the MCP endpoint is served
+- `allow-origin` *(default: `*`)* — value returned in `Access-Control-Allow-Origin` headers for CORS/SSE
+- `enable-json-response` — allow non-streaming JSON responses for simple calls (optional but recommended for proxies)
+
+You can place the binary behind an HTTPS reverse proxy (nginx, Caddy, Cloudflare Tunnel, etc.) and expose the chosen `base-path`
+to the internet. Remember to secure the proxy with authentication or IP restrictions—anyone who can reach this endpoint can send
+commands to your SSH target.
+
 ## Client Setup
 
-You can configure Claude Desktop to use this MCP Server.
+You can configure MCP clients such as Claude Desktop or GitHub Copilot Studio to use this server.
 
 **Required Parameters:**
 - `host`: Hostname or IP of the Linux or Windows server
